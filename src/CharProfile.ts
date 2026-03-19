@@ -47,8 +47,6 @@ class _CharProfile {
         return charConfig;
     }
 
-    /**保存到文件 */
-    async saveToFile(): Promise<void> { }
     /**获取该实例
      * @returns 角色档案实例
      */
