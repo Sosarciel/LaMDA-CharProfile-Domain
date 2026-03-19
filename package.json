@@ -1,42 +1,42 @@
 {
-  "name": "@sosraciel-lamda/charprofile-domain",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "exports": {
-    ".": {
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./mock": {
-      "require": "./dist/mock/index.js",
-      "types": "./dist/mock/index.d.ts"
-    }
-  },
-  "scripts": {
-    "test": "jest",
-    "compile": "powershell scripts/compile",
-    "watch": "powershell scripts/watch",
-    "build-schema": "powershell scripts/build-schema",
-    "expand-macro": "powershell scripts/expand-macro",
-    "build": "powershell scripts/pack",
-    "release": "powershell scripts/release"
-  },
-  "repository": "https://github.com/Sosarciel/LaMDA-CharProfile-Domain.git",
-  "author": "zwa73",
-  "license": "ISC",
-  "description": "Character Profile Domain for LaMDA",
-  "files": [
-    "dist",
-    "data",
-    "schema"
-  ],
-  "dependencies": {
-    "@zwa73/modular-mixer": "^1.0.4",
-    "@zwa73/utils": "^1.0.287",
-    "handlebars": "^4.7.8",
-    "pathe": "^1.1.2"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0"
-  }
+	"name": "@sosraciel-lamda/charprofile-domain",
+	"version": "1.0.2",
+	"main": "dist/index.js",
+	"exports": {
+		".": {
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./mock": {
+			"require": "./dist/mock/index.js",
+			"types": "./dist/mock/index.d.ts"
+		}
+	},
+	"scripts": {
+		"test": "jest",
+		"compile": "powershell scripts/compile",
+		"watch": "powershell scripts/watch",
+		"build-schema": "powershell scripts/build-schema",
+		"expand-macro": "powershell scripts/expand-macro",
+		"build": "powershell scripts/pack",
+		"release": "powershell scripts/release"
+	},
+	"repository": "https://github.com/Sosarciel/LaMDA-CharProfile-Domain.git",
+	"author": "zwa73",
+	"license": "ISC",
+	"description": "Character Profile Domain for LaMDA",
+	"files": [
+		"dist",
+		"data",
+		"schema"
+	],
+	"dependencies": {
+		"@zwa73/modular-mixer": "^1.0.4",
+		"@zwa73/utils": "^1.0.287",
+		"handlebars": "^4.7.8",
+		"pathe": "^1.1.2"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0"
+	}
 }

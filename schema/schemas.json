@@ -1,0 +1,96 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"definitions": {
+		"CharConfigJsonTable": {
+			"description": "CharConfig 的 json 格式",
+			"type": "object",
+			"properties": {
+				"name": {
+					"description": "角色显示名",
+					"type": "string"
+				},
+				"id": {
+					"description": "角色ID",
+					"type": "string"
+				},
+				"default_user_name": {
+					"description": "默认用户名",
+					"type": "string"
+				},
+				"status_reply_table": {
+					"description": "角色对状态的固定反馈",
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					}
+				},
+				"term_map": {
+					"description": "音频翻译术语映射表",
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					}
+				},
+				"term_map_after": {
+					"description": "音频翻译术语映射表  翻译后",
+					"type": "object",
+					"additionalProperties": {
+						"type": "string"
+					}
+				},
+				"logit_bias_map": {
+					"description": "逻辑回归偏置",
+					"type": "object",
+					"additionalProperties": {
+						"type": "number"
+					}
+				},
+				"tts_instance_name": {
+					"description": "tts实例名",
+					"type": [
+						"null",
+						"string"
+					]
+				},
+				"tts_option": {
+					"$ref": "#/definitions/CharConfigTTSOption",
+					"description": "tts设置"
+				},
+				"lam_instance_name": {
+					"description": "语言模型实例名",
+					"type": "string"
+				}
+			},
+			"required": [
+				"default_user_name",
+				"id",
+				"lam_instance_name",
+				"logit_bias_map",
+				"name",
+				"status_reply_table",
+				"term_map",
+				"term_map_after"
+			]
+		},
+		"CharConfigTTSOption": {
+			"description": "角色tts设置",
+			"$ref": "#/definitions/CharConfigTTSOption_1"
+		},
+		"__type": {
+			"description": "角色tts设置",
+			"type": "object",
+			"properties": {
+				"speaker_id": {
+					"description": "tts角色id",
+					"type": "string"
+				}
+			},
+			"required": [
+				"speaker_id"
+			]
+		},
+		"CharConfigTTSOption_1": {
+			"$ref": "#/definitions/__type"
+		}
+	}
+}
