@@ -21,8 +21,9 @@ export const CharHelperMixinOpt = {
 class _CharProfile {
     //#region 构造函数
     private constructor() {}
-    /**异步构造函数
-     * @returns 异步构造函数
+    /**创建角色档案实例
+     * @param opt - 角色选项
+     * @returns 角色档案实例
      */
     static async create(opt:CharOption): Promise<CharProfile> {
         const ch = new _CharProfile();
@@ -37,7 +38,7 @@ class _CharProfile {
     //#endregion
 
     //———————————————————— utils ————————————————————//
-    /**重载char设定 */
+    /**重载角色配置 */
     async reloadChar(): Promise<CharConfig> {
         const charConfig = await fix(this).loadChar();
         //重定向组合
@@ -48,8 +49,8 @@ class _CharProfile {
 
     /**保存到文件 */
     async saveToFile(): Promise<void> { }
-    /**获取该实例的数据管理器
-     * @returns 数据管理器
+    /**获取该实例
+     * @returns 角色档案实例
      */
     getCH(): CharProfile {
         return fix(this);
@@ -66,12 +67,12 @@ function compose(obj:_CharProfile,charConfig:CharConfig,charAccesser:CharAccesse
     return ob1;
 }
 
-/**角色访问器 选项 */
+/**角色管理器选项 */
 export type CharProfileOption = {
     /**资源目录 */
     dataPath:string
 }
-/**角色访问器 */
+/**角色管理器 */
 export type CharProfile = ReturnType<typeof compose>;
 export const CharProfile = UtilFunc.createInjectable({
     initInject:(opt:CharProfileOption)=>{
@@ -79,9 +80,7 @@ export const CharProfile = UtilFunc.createInjectable({
         /**根据charId存储的 CharHelper */
         const charTable:Record<string,CharProfile> = {};
         return {
-            /**根据charid获取datamanager  
-             * 不存在则创建  
-             */
+            /**根据charId获取角色档案实例，不存在则创建 */
             getCharHelper: async (charId:string):Promise<CharProfile|undefined>=>{
                 let ch = charTable[charId];
                 if(ch==null){
