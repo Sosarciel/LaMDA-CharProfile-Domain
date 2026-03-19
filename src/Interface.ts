@@ -8,7 +8,9 @@ export type CharOption = {
     charId:string;
 }
 
-/**渲染的角色消息对象 */
+/**渲染的角色消息对象
+ * @sync 与 @sosraciel-lamda/dialog-domain 的 DBRenderedCharMessage 保持同步
+ */
 export type CharRenderedMessage={
     /**必定为 chat */
     type:'chat';
@@ -18,7 +20,9 @@ export type CharRenderedMessage={
     content:string;
 }
 
-/**渲染完成的场景 */
+/**渲染完成的场景
+ * @sync 与 @sosraciel-lamda/dialog-domain 的 DBRenderedScene 保持同步
+ */
 export type CharScene={
     /**场景定义 */
     define:string;
