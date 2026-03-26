@@ -1,40 +1,40 @@
 ---
-aliases: [charprofile-domain 模块演进分析]
+aliases: [CharProfile-Domain 模块演进分析]
 ---
-# charprofile-domain 模块演进分析
+# CharProfile-Domain 模块演进分析
 
 ## 已验证问题
 
-### p1 重要改进
+### P1 重要改进
 
 #### 1. 缓存管理 ✅ 已确认
-**位置**: `charprofile.ts:82`
-**问题**: `chartable` 是永久缓存，无过期机制
+**位置**: `CharProfile.ts:82`
+**问题**: `charTable` 是永久缓存，无过期机制
 **影响**: 配置更新后需要重启服务才能生效，长时间运行可能导致内存增长
-**方案**: 添加缓存刷新策略或 ttl
+**方案**: 添加缓存刷新策略或 TTL
 
-### p2 架构优化
+### P2 架构优化
 
-#### 1. modular mixer 复杂度 ✅ 已确认
-**位置**: `charprofile.ts:56-61`
-**问题**: mixer 模式增加理解难度，调试困难
+#### 1. Modular Mixer 复杂度 ✅ 已确认
+**位置**: `CharProfile.ts:56-61`
+**问题**: Mixer 模式增加理解难度，调试困难
 **方案**: 评估是否可简化为普通组合，或添加详细文档
 
 #### 2. 类型安全 ✅ 已确认
-**位置**: `charprofile.ts:52`
-**问题**: `fix` 函数使用 `as any as charprofile`
+**位置**: `CharProfile.ts:52`
+**问题**: `fix` 函数使用 `as any as CharProfile`
 **方案**: 增强类型推断，减少类型断言
 
-### p3 功能增强
+### P3 功能增强
 
 #### 1. 角色版本管理 ✅ 已确认需要
 **问题**: 配置变更后无法回滚
 **建议**: 添加版本管理
 ```typescript
-interface charversioning {
-    getversion(): string;
-    gethistory(): promise<charconfig[]>;
-    rollback(version: string): promise<void>;
+interface CharVersioning {
+    getVersion(): string;
+    getHistory(): Promise<CharConfig[]>;
+    rollback(version: string): Promise<void>;
 }
 ```
 
@@ -47,21 +47,21 @@ interface charversioning {
 
 | 项目 | 严重程度 | 预估工时 | 优先级 |
 |------|----------|----------|--------|
-| 缓存管理 | 中 | 2h | p1 |
-| mixer 模式评估 | 低 | 8h | p2 |
-| 类型安全 | 低 | 4h | p2 |
-| 角色版本管理 | 低 | 8h | p3 |
-| 角色导入导出 | 低 | 4h | p3 |
+| 缓存管理 | 中 | 2h | P1 |
+| Mixer 模式评估 | 低 | 8h | P2 |
+| 类型安全 | 低 | 4h | P2 |
+| 角色版本管理 | 低 | 8h | P3 |
+| 角色导入导出 | 低 | 4h | P3 |
 
 ---
 
 ## 演进方向
 
 ### 短期目标
-- 缓存管理优化（添加 ttl 或刷新接口）
+- 缓存管理优化（添加 TTL 或刷新接口）
 
 ### 中期目标
-- mixer 模式评估
+- Mixer 模式评估
 - 类型安全增强
 
 ### 长期目标
