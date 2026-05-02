@@ -155,11 +155,11 @@ class _CharConfig {
             const scene = await this.parseDefine(sceneName,sceneTextTable[sceneName]);
             if(scene!=null){
                 if(scene.dialog && scene.dialog.length <=0){
-                    SLogger.warn(`CahrConfig.loadScenes 错误 dialog长度小于等于0  已跳过 sceneName:${sceneName} scene:${scene}`);
+                    SLogger.warn(`CahrConfig.loadScenes 错误 dialog长度小于等于0  已跳过 sceneName:${sceneName} scene:`,scene);
                     continue;
                 }
                 if(scene.dialog && scene.dialog[scene.dialog.length-1].sender_name!=this.getCharDisplayName()){
-                    SLogger.warn(`CahrConfig.loadScenes 错误 dialog不以角色回复结尾 已跳过 sceneName:${sceneName} scene:${scene}`);
+                    SLogger.warn(`CahrConfig.loadScenes 错误 dialog不以角色回复结尾 已跳过 sceneName:${sceneName} scene:`,scene);
                     continue;
                 }
                 this.sceneTable[sceneName] = scene;
