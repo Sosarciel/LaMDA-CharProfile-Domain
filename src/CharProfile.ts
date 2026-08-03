@@ -3,14 +3,15 @@ import { Composer } from "@zwa73/modular-mixer";
 import { UtilFunc } from "@zwa73/utils";
 
 import { CharAccesser, CharAccesserMixinOpt } from "./Accesser";
-import type { CharConfig } from "./Config";
+import { CharConfig } from "./Config";
 import { CharConfigMixinOpt } from "./Config";
-import type { CharOption } from "./Interface";
+import type { CharOption, CharScene } from "./Interface";
 
 
 const fieldList = [
     ...CharConfigMixinOpt.fieldList,
     ...CharAccesserMixinOpt.fieldList,
+    'getScene',
     "getCH",
 ] as const;
 /**混入设置 */
@@ -36,6 +37,24 @@ class _CharProfile {
         return compose(ch,charConfig,da);
     }
     //#endregion
+
+
+    async getScene (sceneName:string|null="default"):Promise<CharScene>{
+        if(sceneName=="null"||sceneName==null)
+            sceneName="default";
+
+        //已存在(含default)直接返回
+        if(fix(this).hasSceneFromTable(sceneName))
+            return fix(this).getSceneFromTable(sceneName);
+
+        //懒加载：读文本 → 解析 → 存入 → 返回
+        const text = await fix(this).loadSceneText(sceneName);
+        if(text==null) return fix(this).getSceneFromTable("default");
+
+        const scene = await fix(this).loadScene(sceneName, text);
+        if(scene==null) return fix(this).getSceneFromTable("default");
+        return scene;
+    };
 
     //———————————————————— utils ————————————————————//
     /**重载角色配置 */

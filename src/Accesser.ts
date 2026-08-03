@@ -5,9 +5,9 @@ import type { JObject, JToken } from "@zwa73/utils";
 import { SLogger, UtilFT, throwError } from "@zwa73/utils";
 import path from "pathe";
 
-import { CharConfig } from "./Config";
 import { CharConstant } from "./Constant";
 import type { CharOption } from "./Interface";
+import { CharConfig } from "./Config";
 
 
 /**混入设置 */
@@ -19,6 +19,8 @@ export const CharAccesserMixinOpt = {
         'deleteAudioFile',
         'saveFavoriteStatus',
         'loadChar',
+        'getCharAccesser',
+        'loadSceneText',
     ]
 } as const satisfies ComposeOpt<CharAccesser>;
 
@@ -84,17 +86,11 @@ export class CharAccesser {
     /**加载char设定
      * @async
      */
-    async loadChar(): Promise<CharConfig> {
+    async loadChar():Promise<CharConfig> {
         const jo = await UtilFT.loadJSONFile(this.charConfigPath) as JObject;
 
-        const filterList = await UtilFT.fileSearchGlob(this.charSceneDir, `*${CharConstant.DEFINE_EXT}`);
-        const procTable = await Promise.all(filterList.map(async (fp)=>({
-            name: path.parse(fp).name,
-            text: await fs.promises.readFile(fp, "utf-8")
-        })));
-        const sceneTable = procTable.reduce((acc,cur)=>({
-            ...acc, [cur.name]: cur.text
-        }),{}as Record<string,string>);
+        //仅读取 default scene，其他 scene 懒加载
+        const defaultSceneText = await this.loadSceneText('default');
 
         //载入定义
         let define = "";
@@ -106,7 +102,23 @@ export class CharAccesser {
             );
         }
 
-        return CharConfig.create(this.charId, jo, define, sceneTable);
+        return CharConfig.create({
+            charId: this.charId,
+            rawObj: jo,
+            defineText: define,
+            defaultSceneText: defaultSceneText ?? "",
+        });
+    }
+
+    /**读取场景文本
+     * @param sceneName - 场景名
+     * @returns 场景文本 不存在时返回null
+     */
+    async loadSceneText(sceneName:string): Promise<string|null> {
+        const filePath = path.join(this.charSceneDir, `${sceneName}${CharConstant.DEFINE_EXT}`);
+        if(!await UtilFT.pathExists(filePath))
+            return null;
+        return fs.promises.readFile(filePath, 'utf-8');
     }
 
     /** 检查文件夹是否存在 如不存在则创建 */

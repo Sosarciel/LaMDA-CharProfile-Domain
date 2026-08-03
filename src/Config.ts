@@ -5,7 +5,16 @@ import { Hbs, SLogger, UtilFunc } from '@zwa73/utils';
 import { CharConstant } from './Constant';
 import type { CharConfigJsonTable, CharRenderedMessage, CharScene, TemplateContext } from './Interface';
 
-
+export type CharConfigOption = {
+    /**角色id */
+    charId:string;
+    /**角色配置 */
+    rawObj:JObject;
+    /**角色定义 */
+    defineText:string;
+    /**默认场景 */
+    defaultSceneText:string;
+}
 
 const fieldList = [
     'getCharDisplayName',
@@ -13,7 +22,6 @@ const fieldList = [
     'hasVoice',
     'getDefaultUserName',
     'getDefineUserName',
-    'getScene',
     'getStatusReply',
     'getDefine',
     'transReplace',
@@ -23,6 +31,9 @@ const fieldList = [
     'getLaMInstanceName',
     'getLogitBias',
     'getCharConfig',
+    'getSceneFromTable',
+    'hasSceneFromTable',
+    'loadScene',
 ] as const satisfies (keyof _CharConfig)[];
 /**混入设置 */
 export const CharConfigMixinOpt = {
@@ -33,13 +44,6 @@ export const CharConfigMixinOpt = {
  * @class
  */
 class _CharConfig {
-    /**构造函数
-     * @constructor
-     * @param charId         - 此对象的id
-     * @param rawObj         - 用于初始化的原始对象
-     * @param defineText     - 定义文本
-     * @param sceneTextTable - 场景文本表
-     */
     private constructor(charId:string,rawObj:JObject={}){
         this.fromJSON(rawObj);
         if(this.getCharId()!=charId)
@@ -47,14 +51,12 @@ class _CharConfig {
     }
 
     /**构造函数
-     * @param charId         - 此对象的id
-     * @param rawObj         - 用于初始化的原始对象
-     * @param defineText     - 定义文本
-     * @param sceneTextTable - 场景文本表
+     * @param opt - 构造参数
      */
-    static async create(charId:string,rawObj:JObject={},defineText:string,sceneTextTable:Record<string,string>={}){
+    static async create(opt:CharConfigOption){
+        const {charId,rawObj,defineText,defaultSceneText} = opt;
         const obj = new CharConfig(charId,rawObj);
-        await obj.loadScenes(sceneTextTable);
+        await obj.loadDefaultScene(defaultSceneText);
         obj.defineScene = await obj.parseDefine('define',defineText);
         return obj;
     }
@@ -133,12 +135,24 @@ class _CharConfig {
         }
         return dialogArr;
     }
+    /** 获取定义 */
+    getDefine():CharScene{
+        return this.defineScene;
+    }
 
-    /**载入场景
-     * @param sceneTextTable - 场景表
+    //#region 场景相关
+    /**是否含有场景
+     * @param sceneName - 目标场景
      */
-    private async loadScenes(sceneTextTable:Record<string,string>):Promise<void>{
-        if(sceneTextTable["default"]==null){
+    hasSceneFromTable(sceneName:string):boolean{
+        return this.sceneTable[sceneName]!=null;
+    }
+
+    /**载入默认场景
+     * @param defaultSceneText - default场景文本
+     */
+    private async loadDefaultScene(defaultSceneText:string){
+        if(defaultSceneText==null||defaultSceneText===""){
             SLogger.warn(`CharConfig.loadScene 缺少默认场景 charId:${this.getCharId()}`);
             this.sceneTable["default"]={
                 name:"default",
@@ -150,22 +164,33 @@ class _CharConfig {
                 }],
                 memory:[],
             };
+            return;
         }
-        for(const sceneName in sceneTextTable){
-            const scene = await this.parseDefine(sceneName,sceneTextTable[sceneName]);
-            if(scene!=null){
-                if(scene.dialog && scene.dialog.length <=0){
-                    SLogger.warn(`CahrConfig.loadScenes 错误 dialog长度小于等于0  已跳过 sceneName:${sceneName} scene:`,scene);
-                    continue;
-                }
-                if(scene.dialog && scene.dialog[scene.dialog.length-1].sender_name!=this.getCharDisplayName()){
-                    SLogger.warn(`CahrConfig.loadScenes 错误 dialog不以角色回复结尾 已跳过 sceneName:${sceneName} scene:`,scene);
-                    continue;
-                }
-                this.sceneTable[sceneName] = scene;
-            }
-        }
+        return await this.loadScene('default',defaultSceneText);
     }
+
+    async loadScene(sceneName:string, sceneText:string){
+        const scene = await this.parseDefine(sceneName,sceneText);
+        if(scene==null) return null;
+        if(scene.dialog && scene.dialog.length <=0){
+            SLogger.warn(`CahrConfig.parseScene 错误 dialog长度小于等于0  已跳过 sceneName:${sceneName} scene:`,scene);
+            return null;
+        }
+        if(scene.dialog && scene.dialog[scene.dialog.length-1].sender_name!=this.getCharDisplayName()){
+            SLogger.warn(`CahrConfig.parseScene 错误 dialog不以角色回复结尾 已跳过 sceneName:${sceneName} scene:`,scene);
+            return null;
+        }
+        this.sceneTable[sceneName] = scene;
+        return scene;
+    }
+
+    /**从场景表获取场景(不含fallback)
+     * @param sceneName - 场景名
+     */
+    getSceneFromTable(sceneName:string):CharScene{
+        return this.sceneTable[sceneName];
+    }
+    //#endregion
 
     /** 获取角色的唯一识别id */
     getCharId(){
@@ -220,34 +245,6 @@ class _CharConfig {
             text = text.replaceAll(regex,transMap[key]);
         }
         return text;
-    }
-
-    /**获取场景 default场景必定不为空  
-     * null时为default  
-     * @param sceneName - 场景名 忽略则为default
-     */
-    getScene(sceneName:string|null = "default"):CharScene{
-        if(sceneName=="null"||sceneName==null)
-            sceneName="default";
-
-        const scene = this.sceneTable[sceneName];
-        if(scene==null) return this.sceneTable["default"];
-        return {
-            ...scene,
-            name:sceneName
-        };
-    }
-
-    /**是否含有场景
-     * @param sceneName - 目标场景
-     */
-    hasScene(sceneName:string):boolean{
-        return this.sceneTable[sceneName]!=null;
-    }
-
-    /** 获取定义 */
-    getDefine():CharScene{
-        return this.defineScene;
     }
 
     /**获得角色的logit bias映射 字符串-权重 映射表
