@@ -1,6 +1,6 @@
 import type { ComposeOpt } from "@zwa73/modular-mixer";
 import { Composer } from "@zwa73/modular-mixer";
-import { UtilFunc } from "@zwa73/utils";
+import { MPromise, PRecord, SLogger, UtilFunc } from "@zwa73/utils";
 
 import { CharAccesser, CharAccesserMixinOpt } from "./Accesser";
 import { CharConfig } from "./Config";
@@ -95,16 +95,20 @@ export const CharProfile = UtilFunc.createInjectable({
     initInject:(opt:CharProfileOption)=>{
         const {dataPath} = opt;
         /**根据charId存储的 CharHelper */
-        const charTable:Record<string,CharProfile> = {};
+        const charTable:PRecord<string,MPromise<CharProfile>> = {};
         return {
             /**根据charId获取角色档案实例，不存在则创建 */
             getCharHelper: async (charId:string):Promise<CharProfile|undefined>=>{
-                let ch = charTable[charId];
-                if(ch==null){
+                const ch = charTable[charId];
+                if(ch==undefined){
                     if((await CharAccesser.check({dataPath,charId}))==false)
                         return undefined;
-                    ch = await _CharProfile.create({dataPath,charId});
-                    charTable[charId] = ch;
+                    charTable[charId] = _CharProfile.create({dataPath,charId}).catch(err=>{
+                        SLogger.error(`CharProfile.getCharHelper 错误`,err);
+                        //防止留下Promise<undefined>
+                        delete charTable[charId];
+                        return undefined as any;
+                    });
                 }
                 return ch;
             }

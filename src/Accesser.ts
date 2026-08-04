@@ -154,7 +154,7 @@ export class CharAccesser {
     async deleteAudioFile(messageid: string): Promise<boolean> {
         if (await this.hasAudioFile(messageid)) {
             try {
-                void fs.promises.unlink(this.getAudioPath(messageid));
+                await fs.promises.unlink(this.getAudioPath(messageid));
             } catch (e) {
                 SLogger.warn(`CharAccesser.deleteAudioFile 错误\n${e}`);
                 return false;
@@ -199,7 +199,7 @@ export class CharAccesser {
                 await fs.promises.copyFile(audioFilePath, saveAudioPath);
                 //SLogger.warn(`音频已保存至\n${saveAudioPath}`);
             } catch (err) {
-                SLogger.error(`CharFileController.saveFavoriteAudio 保存音频遭遇错误\n${err}`);
+                SLogger.error(`CharAccesser.saveFavoriteStatus 保存音频遭遇错误\n${err}`);
             }
         }));
 
