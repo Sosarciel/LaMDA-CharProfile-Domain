@@ -116,8 +116,10 @@ export class CharAccesser {
      */
     async loadSceneText(sceneName:string): Promise<string|null> {
         const filePath = path.join(this.charSceneDir, `${sceneName}${CharConstant.DEFINE_EXT}`);
-        if(!await UtilFT.pathExists(filePath))
+        if(!await UtilFT.pathExists(filePath)){
+            SLogger.warn(`CharAccesser.loadSceneText 错误 ${filePath} 不存在`)
             return null;
+        }
         return fs.promises.readFile(filePath, 'utf-8');
     }
 

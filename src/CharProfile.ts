@@ -1,6 +1,6 @@
 import type { ComposeOpt } from "@zwa73/modular-mixer";
 import { Composer } from "@zwa73/modular-mixer";
-import { MPromise, PRecord, SLogger, UtilFunc } from "@zwa73/utils";
+import { PRecord, PromiseFlight, SLogger, UtilFunc } from "@zwa73/utils";
 
 import { CharAccesser, CharAccesserMixinOpt } from "./Accesser";
 import { CharConfig } from "./Config";
@@ -38,7 +38,7 @@ class _CharProfile {
     }
     //#endregion
 
-
+    private flight = new PromiseFlight();
     async getScene (sceneName:string|null="default"):Promise<CharScene>{
         if(sceneName=="null"||sceneName==null)
             sceneName="default";
@@ -47,13 +47,20 @@ class _CharProfile {
         if(fix(this).hasSceneFromTable(sceneName))
             return fix(this).getSceneFromTable(sceneName);
 
-        //懒加载：读文本 → 解析 → 存入 → 返回
-        const text = await fix(this).loadSceneText(sceneName);
-        if(text==null) return fix(this).getSceneFromTable("default");
+        // 利用 PromiseFlight 防止并发重复读取和解析同一个 Scene
+        return await this.flight.run(`getScene:${sceneName}`, async () => {
+            // 读文本
+            const text = await fix(this).loadSceneText(sceneName);
+            if (text == null) return fix(this).getSceneFromTable("default");
 
-        const scene = await fix(this).loadScene(sceneName, text);
-        if(scene==null) return fix(this).getSceneFromTable("default");
-        return scene;
+            // 解析并存入 sceneTable
+            const scene = await fix(this).loadScene(sceneName, text);
+            if(scene==null) return fix(this).getSceneFromTable("default");
+            return scene;
+        }).catch(err=>{
+            SLogger.error(`CharProfile.getScene 错误`,err);
+            return fix(this).getSceneFromTable("default");
+        });
     };
 
     //———————————————————— utils ————————————————————//
@@ -95,22 +102,24 @@ export const CharProfile = UtilFunc.createInjectable({
     initInject:(opt:CharProfileOption)=>{
         const {dataPath} = opt;
         /**根据charId存储的 CharHelper */
-        const charTable:PRecord<string,MPromise<CharProfile>> = {};
+        const charTable:PRecord<string,CharProfile> = {};
+        const flight = new PromiseFlight();
         return {
             /**根据charId获取角色档案实例，不存在则创建 */
             getCharHelper: async (charId:string):Promise<CharProfile|undefined>=>{
                 const ch = charTable[charId];
-                if(ch==undefined){
+                if(ch!=undefined) return ch;
+
+                return flight.run(`getCharHelper:${charId}`,async ()=>{
                     if((await CharAccesser.check({dataPath,charId}))==false)
                         return undefined;
-                    charTable[charId] = _CharProfile.create({dataPath,charId}).catch(err=>{
+                    const ch = await _CharProfile.create({dataPath,charId}).catch(err=>{
                         SLogger.error(`CharProfile.getCharHelper 错误`,err);
-                        //防止留下Promise<undefined>
-                        delete charTable[charId];
-                        return undefined as any;
+                        return undefined;
                     });
-                }
-                return ch;
+                    if(ch==undefined) return undefined;
+                    return charTable[charId] = ch;
+                });
             }
         };
     }
