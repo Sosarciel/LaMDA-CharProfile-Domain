@@ -48,7 +48,7 @@ class _CharProfile {
             return fix(this).getSceneFromTable(sceneName);
 
         // 利用 PromiseFlight 防止并发重复读取和解析同一个 Scene
-        return await this.flight.run(`getScene:${sceneName}`, async () => {
+        return await this.flight.run(`CharProfile.getScene:${sceneName}`, async () => {
             // 读文本
             const text = await fix(this).loadSceneText(sceneName);
             if (text == null) return fix(this).getSceneFromTable("default");
@@ -110,7 +110,7 @@ export const CharProfile = UtilFunc.createInjectable({
                 const ch = charTable[charId];
                 if(ch!=undefined) return ch;
 
-                return flight.run(`getCharHelper:${charId}`,async ()=>{
+                return flight.run(`CharProfile.getCharHelper:${charId}`,async ()=>{
                     if((await CharAccesser.check({dataPath,charId}))==false)
                         return undefined;
                     const ch = await _CharProfile.create({dataPath,charId}).catch(err=>{
