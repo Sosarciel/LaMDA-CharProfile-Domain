@@ -1,6 +1,6 @@
 import type { ComposeOpt } from '@zwa73/modular-mixer';
 import type { JObject } from '@zwa73/utils';
-import { Hbs, SLogger, UtilFunc } from '@zwa73/utils';
+import { AsyncHbs, SLogger, UtilFunc } from '@zwa73/utils';
 
 import { CharConstant } from './Constant';
 import type { CharConfigJsonTable, CharRenderedMessage, CharScene, TemplateContext } from './Interface';
@@ -96,8 +96,9 @@ class _CharConfig {
     }
 
     /**解析定义文本 并替换flag
+     * @param name - 场景名
      * @param defineText - 定义文本
-     * @returns 场景 null为失败
+     * @returns 场景
      */
     private async parseDefine(name:string,defineText:string):Promise<CharScene>{
         defineText = defineText.replace(/\r\n/g, "\n");
@@ -106,13 +107,24 @@ class _CharConfig {
             default_user: this.getDefaultUserName(),
             define_user: CharConstant.DEFINE_USER_STR,
         };
-        const hbs = await Hbs.create(context);
-        const define = hbs.render(defineText);
+        const hbs = await AsyncHbs.create();
+        const res = await hbs.render({ template:defineText, context });
+        //渲染失败时按原逻辑回退: 取空文本与空上下文, 只记录告警不中断流程
+        if(res == undefined){
+            SLogger.warn(`CharConfig.parseDefine 渲染失败, 回退为空定义 charId:${this.getCharId()} sceneName:${name}`);
+            return {
+                name,
+                define:"",
+                dialog:this.parseDialog([]),
+                memory:this.parseDialog([]),
+            };
+        }
+        //def/defli 的产出由渲染结果的 context 带出
         return {
             name,
-            define,
-            dialog:this.parseDialog(hbs.context.predialog??[]),
-            memory:this.parseDialog(hbs.context.memory??[]),
+            define:res.text,
+            dialog:this.parseDialog(res.context.predialog??[]),
+            memory:this.parseDialog(res.context.memory??[]),
         };
     }
     /**解析对话
